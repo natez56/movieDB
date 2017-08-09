@@ -1,0 +1,19 @@
+th, td {
+   border: 1px solid black;
+}
+
+table {
+	border: 0;
+	border-collapse:collapse;
+}
+
+li {
+	display: inline;
+	padding: 10px;
+}
+
+ul {
+	margin: 0;
+	padding: 0;
+}
+
