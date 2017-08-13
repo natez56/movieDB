@@ -11,3 +11,38 @@
     <li><a href="movieSequel">Movie Sequels</a></li>
   </ul>
 </div>
+
+<br>
+<br>
+
+<table id="table">
+    <tr>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Age</th>
+    </tr>
+
+    {{#each table}}
+    <tr> 
+        <td>{{this.f_name}}</td>
+        <td>{{this.l_name}}</td>
+        <td>{{this.age}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<br><br>
+
+<form action="/addDirector" method="post">
+    <fieldset>
+        <legend>Add Director</legend>
+        First Name:<input type="text" name="f_name" id="f_name"><br>
+        Last Name:<input type="text" name="l_name" id="l_name"><br>
+        Age:<input type="text" name="age" id="age"><br>
+        Movie they have directed:<select name="movie_id">
+            {{#each rowName}}
+            <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
+            {{/each}}
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>

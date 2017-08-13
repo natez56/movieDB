@@ -11,3 +11,42 @@
     <li><a href="movieSequel">Movie Sequels</a></li>
   </ul>
 </div>
+
+
+<br>
+<br>
+
+<table id="table">
+    <tr>
+        <th>Movie</th>
+        <th>Director</th>
+    </tr>
+
+    {{#each table}}
+    <tr> 
+        <td>{{this.movie_id}}</td>
+        <td>{{this.director_id}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<br><br>
+
+<form action="/addMovieDirector" method="post">
+    <fieldset>
+        <legend>Add Director To Movie</legend>
+        Movie:<select name="movie_id">
+            {{#each rowName}}
+            <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
+            {{/each}}
+        </select>
+        
+        Director:<select name="director_id">
+            {{#each row2Name}}
+            <option name="director_id" value="{{this.director_id}}">{{this.f_name}} {{this.l_name}}</option>
+            {{/each}}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>

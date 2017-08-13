@@ -30,3 +30,22 @@
 </table>
 
 <br><br>
+
+<form action="/addMovieProductionCo" method="post">
+    <fieldset>
+        <legend>Add a movie that a production company has produced.</legend>
+        Movie:<select name="movie_id">
+            {{#each rowName}}
+            <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
+            {{/each}}
+        </select>
+        
+        Produced by:<select name="production_co_id">
+            {{#each row2Name}}
+            <option name="production_co_id" value="{{this.production_co_id}}">{{this.name}}</option>
+            {{/each}}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>

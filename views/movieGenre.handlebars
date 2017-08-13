@@ -11,3 +11,41 @@
     <li><a href="movieSequel">Movie Sequels</a></li>
   </ul>
 </div>
+
+<br>
+<br>
+
+<table id="table">
+    <tr>
+        <th>Movie</th>
+        <th>Genre</th>
+    </tr>
+
+    {{#each table}}
+    <tr> 
+        <td>{{this.movie_id}}</td>
+        <td>{{this.genre_id}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<br><br>
+
+<form action="/addMovieGenre" method="post">
+    <fieldset>
+        <legend>Add Genre To Movie</legend>
+        Movie:<select name="movie_id">
+            {{#each rowName}}
+            <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
+            {{/each}}
+        </select>
+        
+        Genre:<select name="genre_id">
+            {{#each row2Name}}
+            <option name="genre_id" value="{{this.genre_id}}">{{this.type}}</option>
+            {{/each}}
+        </select>
+        
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>
