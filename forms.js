@@ -21,8 +21,90 @@ app.get('/',function(req,res,next){
 });
 
 app.get('/movie',function(req,res,next){
-    res.render('movie');
+  var context = {};
+  var tableData = [];
+  var tableData2 = [];
+
+  mysql.pool.query('SELECT * FROM `Movie`', function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.table = tableData;
+  });
+
+  mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData2.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.rowName = tableData2;
+
+    res.render('movie', context);
+  });
 });
+
+app.post('/addMovie', function(req,res,next){
+  var context = {};
+  var movieIdVal;
+  var movieTitle
+  var productionCoId = req.body.production_co_id;
+
+  mysql.pool.query("INSERT INTO `Movie` (title, duration, release_year) VALUES (?, ?, ?)", 
+    [req.body.title, req.body.duration, req.body.release_year], function(err, result){
+    
+    if(err){
+      console.log("Error occurred.");
+      next(err);
+      return;
+    }
+
+    movieTitle = req.body.title;
+    console.log(movieTitle);
+    mysql.pool.query('SELECT `movie_id` FROM `Movie` WHERE `title` =' + movieTitle, function(err, rows, fields){
+      if(err){
+        next(err);
+        return;
+      }
+
+      movieIdVal = rows[0].movie_id;
+      console.log(movieIdVal);
+      console.log(productionCoId);
+
+      mysql.pool.query("INSERT INTO `Movie_Production_Co` (movie_id, production_co_id) VALUES (?, ?)", 
+        [movieIdVal, productionCoId], function(err, result){
+        if(err){
+        console.log("Error occurred.");
+        next(err);
+        return;
+      }
+    
+      });
+    });
+
+  });
+  res.render("addSuccess");
+});
+
+
 
 app.get('/genre',function(req,res,next){
     res.render('genre');
@@ -33,7 +115,41 @@ app.get('/director',function(req,res,next){
 });
 
 app.get('/productionCo',function(req,res,next){
-    res.render('productionCo');
+  var context = {};
+  var tableData = [];
+
+  mysql.pool.query('SELECT * FROM Production_Company', function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.table = tableData;
+
+    res.render('productionCo', context);
+  });
+});
+
+app.post('/addProductionCo', function(req,res,next){
+  var context = {};
+
+  mysql.pool.query("INSERT INTO Production_Company (name, ceo_f_name, ceo_l_name, headquarters) VALUES (?, ?, ?, ?)", 
+    [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.headquarters], function(err, result){
+    if(err){
+      console.log("Error occurred.");
+      next(err);
+      return;
+    }
+    res.render("addSuccess");
+  }); 
 });
 
 app.get('/movieSequel',function(req,res,next){
@@ -49,7 +165,27 @@ app.get('/movieGenre',function(req,res,next){
 });
 
 app.get('/movieProductionCo',function(req,res,next){
-    res.render('movieProductionCo');
+  var context = {};
+  var tableData = [];
+
+  mysql.pool.query('SELECT * FROM Movie_Production_Co', function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.table = tableData;
+
+    res.render('movieProductionCo', context);
+  });
 });
 
 app.get('/create',function(req,res,next){
@@ -76,8 +212,8 @@ app.get('/create-tables',function(req,res,next){
     var createString = "CREATE TABLE `Movie`("+
     "`movie_id` INT AUTO_INCREMENT,"+
     "`title` VARCHAR(255) NOT NULL,"+
-    "`duration` INT NOT NULL,"+
-    "`release_year` INT NOT NULL,"+
+    "`duration` INT,"+
+    "`release_year` INT,"+
     "PRIMARY KEY(`movie_id`));";
     mysql.pool.query(createString, function(err){
       mysql.pool.query("DROP TABLE IF EXISTS `Genre`", function(err){
@@ -86,11 +222,12 @@ app.get('/create-tables',function(req,res,next){
         "`type` VARCHAR(255) NOT NULL UNIQUE,"+
         "PRIMARY KEY(`genre_id`));";
         mysql.pool.query(string2, function(err){
-          mysql.pool.query("DROP TABLE IF EXISTS `Production_Company", function(err){
+          mysql.pool.query("DROP TABLE IF EXISTS `Production_Company`", function(err){
           var string3 = "CREATE TABLE `Production_Company`("+
           "`production_co_id` INT AUTO_INCREMENT,"+
           "`name` VARCHAR(255) NOT NULL UNIQUE,"+
-          "`ceo` VARCHAR(255),"+
+          "`ceo_f_name` VARCHAR(255),"+
+          "`ceo_l_name` VARCHAR(255),"+
           "`headquarters` VARCHAR(255) NOT NULL,"+
           "PRIMARY KEY(`production_co_id`));";
           mysql.pool.query(string3, function(err){

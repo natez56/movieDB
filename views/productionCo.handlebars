@@ -11,3 +11,37 @@
     <li><a href="movieSequel">Movie Sequels</a></li>
   </ul>
 </div>
+
+<br>
+<br>
+
+<table id="table">
+    <tr>
+        <th>Name</th>
+        <th>CEO First Name</th>
+        <th>CEO Last Name</th>
+        <th>Headquarters</th>
+    </tr>
+
+    {{#each table}}
+    <tr> 
+        <td>{{this.name}}</td>
+        <td>{{this.ceo_f_name}}</td>
+        <td>{{this.ceo_l_name}}</td>
+        <td>{{headquarters}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<br><br>
+
+<form action="/addProductionCo" method="post">
+    <fieldset>
+        <legend>Add Production Company</legend>
+        Name:<input type="text" name="name" id="name"><br>
+        CEO First Name:<input type="text" name="ceo_f_name" id="ceo_f_name"><br>
+        CEO Last Name:<input type="text" name="ceo_l_name" id="ceo_l_name"><br>
+        Headquarters:<input type = "text" name="headquarters" id="headquarters"><br>
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>

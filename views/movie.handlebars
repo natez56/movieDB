@@ -11,3 +11,38 @@
     <li><a href="movieSequel">Movie Sequels</a></li>
   </ul>
 </div>
+
+<br>
+<br>
+
+<table id="table">
+    <tr>
+        <th>Title</th>
+        <th>Duration</th>
+        <th>Release Year</th>
+    </tr>
+
+    {{#each table}}
+    <tr> 
+        <td>{{this.title}}</td>
+        <td>{{this.duration}}</td>
+        <td>{{this.release_year}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<br><br>
+
+<form action="/addMovie" method="post">
+    <fieldset>
+        <legend>Add Movie</legend>
+        Title:<input type="text" name="title" id="title"><br>
+        Duration (Minutes):<input type="text" name="duration" id="duration"><br>
+        Release Year:<input type="text" name="release_year" id="release_year"><br>
+        Production Company:<select name="production_co_id">
+            {{#each rowName}}
+            <option name="production_co_id" value="{{this.production_co_id}}">{{this.name}}</option>
+            {{/each}}
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>
