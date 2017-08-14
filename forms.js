@@ -24,6 +24,7 @@ app.get('/movie',function(req,res,next){
   var context = {};
   var tableData = [];
   var tableData2 = [];
+  var tableData3 = [];
 
   mysql.pool.query('SELECT * FROM `Movie`', function(err, rows, fields){
     if(err){
@@ -41,25 +42,39 @@ app.get('/movie',function(req,res,next){
     context.results = JSON.stringify(rows);
     context.table = tableData;
     mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      if(err){
+        next(err);
+        return;
+      }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    res.render('movie', context);
+      context.results = JSON.stringify(rows);
+      context.rowName = tableData2;
+      mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
+        if(err){
+          next(err);
+          return;
+        }
+    
+        var data = JSON.stringify(rows);
+        var json = JSON.parse(data);
+
+        for (var key in json) {
+          tableData3.push(json[key]);
+        }
+
+        context.results = JSON.stringify(rows);
+        context.row2Name = tableData3;
+        res.render('movie', context);
+      });
+    });
   });
-  });
-
-  
 });
 
 app.post('/addMovie', function(req,res,next){
@@ -102,6 +117,23 @@ app.post('/addMovie', function(req,res,next){
 
   });
   res.render("addSuccess");
+});
+
+app.post('/deleteMovie', function(req,res,next){
+  var context = {};
+  var movieIdVal;
+  var movieTitle
+  var productionCoId = req.body.production_co_id;
+
+  mysql.pool.query("DELETE FROM `Movie` WHERE `movie_id` = ?", [req.body.movie_id], function(err, result){
+    
+    if(err){
+      console.log("Error occurred.");
+      next(err);
+      return;
+    }
+    res.render("deleteSuccess");
+  });
 });
 
 
@@ -267,7 +299,11 @@ app.get('/movieSequel',function(req,res,next){
   var context = {};
   var tableData = [];
   var tableData2 = [];
-  var titleQuery = "SELECT movie_id, sequel_id FROM Sequels";
+  var tableData3 = [];
+
+  // Change T1 LEFT JOIN in brackerts to INNER JOIN to only select movies with sequels
+  var titleQuery = "SELECT T1.title AS original, T2.title AS sequel FROM (SELECT m.title, m.movie_id FROM Movie m INNER JOIN Sequels s ON m.movie_id = s.movie_id) AS T1 LEFT JOIN " +
+  "(SELECT mo.title, se.movie_id FROM Movie mo INNER JOIN Sequels se ON mo.movie_id = se.sequel_id) AS T2 ON T1.movie_id = T2.movie_id";
 
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
@@ -279,12 +315,10 @@ app.get('/movieSequel',function(req,res,next){
     var json = JSON.parse(data);
 
     for (var key in json) {
+      console.log(json[key]);
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
-    context.table = tableData;
-    context.results = JSON.stringify(rows);
     context.table = tableData;
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
     if(err){
@@ -326,7 +360,9 @@ app.get('/movieDirector',function(req,res,next){
   var tableData = [];
   var tableData2 = [];
   var tableData3 = [];
-  var titleQuery = "SELECT movie_id, director_id FROM Movie_Director";
+  var titleQuery = "SELECT m.title, d.f_name, d.l_name FROM `Movie` m INNER JOIN `Movie_Director` md ON" +
+  " m.movie_id = md.movie_id INNER JOIN `Director` d ON d.director_id = md.director_id" +
+  " ORDER BY m.title ASC;";
 
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
@@ -399,7 +435,9 @@ app.get('/movieGenre',function(req,res,next){
   var tableData = [];
   var tableData2 = [];
   var tableData3 = [];
-  var titleQuery = "SELECT movie_id, genre_id FROM Movie_Genre";
+  var titleQuery = "SELECT m.title, g.type FROM `Movie` m LEFT JOIN `Movie_Genre` mg ON" +
+  " m.movie_id = mg.movie_id LEFT JOIN `Genre` g ON mg.genre_id = g.genre_id" +
+  " ORDER BY m.title ASC;";
 
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
@@ -417,37 +455,37 @@ app.get('/movieGenre',function(req,res,next){
     context.results = JSON.stringify(rows);
     context.table = tableData;
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
-    
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      if(err){
+        next(err);
+        return;
+      }
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    mysql.pool.query('SELECT `genre_id`, `type` FROM `Genre`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
-    
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    for (var key in json) {
-      tableData3.push(json[key]);
-    }
+      context.results = JSON.stringify(rows);
+      context.rowName = tableData2;
+      mysql.pool.query('SELECT `genre_id`, `type` FROM `Genre`', function(err, rows, fields){
+        if(err){
+          next(err);
+          return;
+        }
 
-    context.results = JSON.stringify(rows);
-    context.row2Name = tableData3;
-    res.render('movieGenre', context);
-    });
+        var data = JSON.stringify(rows);
+        var json = JSON.parse(data);
+
+        for (var key in json) {
+          tableData3.push(json[key]);
+        }
+
+        context.results = JSON.stringify(rows);
+        context.row2Name = tableData3;
+        res.render('movieGenre', context);
+      });
     });
   });
 });
@@ -472,8 +510,9 @@ app.get('/movieProductionCo',function(req,res,next){
   var tableData = [];
   var tableData2 = [];
   var tableData3 = [];
-  var titleQuery = "SELECT movie_id, production_co_id FROM Movie_Production_Co";
-
+  var titleQuery = "SELECT m.title, p.name FROM `Movie` m INNER JOIN `Movie_Production_Co` mp ON" +
+  " m.movie_id = mp.movie_id INNER JOIN `Production_Company` p ON mp.production_co_id = p.production_co_id" +
+  " ORDER BY p.name ASC;";
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
       next(err);
@@ -579,36 +618,44 @@ app.get('/create-tables',function(req,res,next){
                   "`movie_id` INT,"+
                   "`sequel_id` INT,"+
                   "FOREIGN KEY(`movie_id`)"+
-                  "  REFERENCES `Movie`(`movie_id`),"+
+                  "  REFERENCES `Movie`(`movie_id`)"+
+                  "  ON UPDATE CASCADE ON DELETE CASCADE," +
                   "FOREIGN KEY(`sequel_id`)"+
-                  "  REFERENCES `Movie`(`movie_id`));";
+                  "  REFERENCES `Movie`(`movie_id`)" +
+                  "  ON UPDATE CASCADE ON DELETE CASCADE);";
                   mysql.pool.query(string5, function(err){
                     mysql.pool.query("DROP TABLE IF EXISTS `Movie_Production_Co`", function(err){
                       var string6 = "CREATE TABLE `Movie_Production_Co`("+
                       "`movie_id` INT,"+
                       "`production_co_id` INT,"+
                       "FOREIGN KEY(`movie_id`)"+
-                      "  REFERENCES `Movie`(`movie_id`),"+
+                      "  REFERENCES `Movie`(`movie_id`)"+
+                      "ON UPDATE CASCADE ON DELETE CASCADE," +
                       "FOREIGN KEY(`production_co_id`)"+
-                      "  REFERENCES `Production_Company`(`production_co_id`));";
+                      "  REFERENCES `Production_Company`(`production_co_id`)" +
+                      "ON UPDATE CASCADE ON DELETE CASCADE);";
                       mysql.pool.query(string6, function(err){
                         mysql.pool.query("DROP TABLE IF EXISTS `Movie_Director`", function(err){
                           var string7 = "CREATE TABLE `Movie_Director`("+
                           "`movie_id` INT,"+
                           "`director_id` INT,"+
                           "FOREIGN KEY(`movie_id`)"+
-                          "  REFERENCES `Movie`(`movie_id`),"+
+                          "  REFERENCES `Movie`(`movie_id`)"+
+                          "ON UPDATE CASCADE ON DELETE CASCADE," +
                           "FOREIGN KEY(`director_id`)"+
-                          "  REFERENCES `Director`(`director_id`));";
+                          "  REFERENCES `Director`(`director_id`)" +
+                          "ON UPDATE CASCADE ON DELETE CASCADE);";
                           mysql.pool.query(string7, function(err){
                             mysql.pool.query("DROP TABLE IF EXISTS `Movie_Genre`", function(err){
                               var string8 = "CREATE TABLE `Movie_Genre`("+
                               "`movie_id` INT,"+
                               "`genre_id` INT,"+
                               "FOREIGN KEY(`movie_id`)"+
-                              "  REFERENCES `Movie`(`movie_id`),"+
+                              "  REFERENCES `Movie`(`movie_id`)"+
+                              "ON UPDATE CASCADE ON DELETE CASCADE," +
                               "FOREIGN KEY(`genre_id`)"+
-                              "  REFERENCES `Genre`(`genre_id`));";
+                              "  REFERENCES `Genre`(`genre_id`)" +
+                              "ON UPDATE CASCADE ON DELETE CASCADE);";
                               mysql.pool.query(string8, function(err){
                                 context.results = "Table reset";
                                 res.render('home',context);
