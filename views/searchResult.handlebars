@@ -16,24 +16,16 @@
 <br>
 
 <table id="table">
-    <caption>Genres</caption>
+    <caption>Genre Search Result</caption>
     <tr>
-        <th>Type</th>
+        <th>Movie</th>
+        <th>Genre</th>
     </tr>
 
     {{#each table}}
     <tr> 
+        <td>{{this.title}}</td>
         <td>{{this.type}}</td>
     </tr>
     {{/each}}
 </table>
-
-<br><br>
-
-<form action="/addGenre" method="post">
-    <fieldset>
-        <legend>Add Genre</legend>
-        Type:<input type="text" name="type" id="type"><br>
-        <input type="submit" value="Submit">
-    </fieldset>
-</form>

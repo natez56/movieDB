@@ -16,6 +16,7 @@
 <br>
 
 <table id="table">
+    <caption>Movies and Their Genres</caption>
     <tr>
         <th>Movie</th>
         <th>Genre</th>
@@ -46,6 +47,18 @@
             {{/each}}
         </select>
         
+        <input type="submit" value="Submit">
+    </fieldset>
+</form>
+
+<form action="/searchMovieGenre" method="post">
+    <fieldset>
+        <legend>Look up Movies by Genre</legend>
+        Genre:<select name="genre_id">
+            {{#each row2Name}}
+            <option name="genre_id" value="{{this.genre_id}}">{{this.type}}</option>
+            {{/each}}
+        </select>      
         <input type="submit" value="Submit">
     </fieldset>
 </form>

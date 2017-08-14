@@ -505,6 +505,31 @@ app.post('/addMovieGenre', function(req,res,next){
   }); 
 });
 
+app.post('/searchMovieGenre', function(req,res,next){
+  var context = {};
+  var tableData = [];
+  var searchQuery = "SELECT m.title, g.type FROM Movie m INNER JOIN Movie_Genre mg ON m.movie_id = mg.movie_id " +
+  "INNER JOIN Genre g ON mg.genre_id = g.genre_id WHERE g.genre_id = ? ORDER BY m.title ASC";
+
+  mysql.pool.query(searchQuery, [req.body.genre_id], function(err, rows, fields){ 
+    if(err){
+      console.log("Error occurred.");
+      next(err);
+      return;
+    }
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.table = tableData;
+    res.render("searchResult", context);
+  }); 
+});
+
 app.get('/movieProductionCo',function(req,res,next){
   var context = {};
   var tableData = [];
