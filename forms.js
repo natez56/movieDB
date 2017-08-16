@@ -25,6 +25,7 @@ app.get('/movie',function(req,res,next){
   var tableData = [];
   var tableData2 = [];
   var tableData3 = [];
+  var tableData4 = [];
 
   mysql.pool.query('SELECT * FROM `Movie`', function(err, rows, fields){
     if(err){
@@ -56,7 +57,7 @@ app.get('/movie',function(req,res,next){
 
       context.results = JSON.stringify(rows);
       context.rowName = tableData2;
-      mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
+      mysql.pool.query('SELECT `genre_id`, `type` FROM `Genre`', function(err, rows, fields){
         if(err){
           next(err);
           return;
@@ -66,12 +67,28 @@ app.get('/movie',function(req,res,next){
         var json = JSON.parse(data);
 
         for (var key in json) {
-          tableData3.push(json[key]);
+          tableData4.push(json[key]);
         }
 
         context.results = JSON.stringify(rows);
-        context.row2Name = tableData3;
-        res.render('movie', context);
+        context.row3Name = tableData4;
+        mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
+          if(err){
+            next(err);
+            return;
+          }
+
+          var data = JSON.stringify(rows);
+          var json = JSON.parse(data);
+
+          for (var key in json) {
+            tableData3.push(json[key]);
+          }
+
+          context.results = JSON.stringify(rows);
+          context.row2Name = tableData3;
+          res.render('movie', context);
+        });
       });
     });
   });
@@ -82,10 +99,10 @@ app.post('/addMovie', function(req,res,next){
   var movieIdVal;
   var movieTitle
   var productionCoId = req.body.production_co_id;
+  var genreIdVal = req.body.genre_id;
 
   mysql.pool.query("INSERT INTO `Movie` (title, duration, release_year) VALUES (?, ?, ?)", 
     [req.body.title, req.body.duration, req.body.release_year], function(err, result){
-    
     if(err){
       console.log("Error occurred.");
       next(err);
@@ -94,7 +111,8 @@ app.post('/addMovie', function(req,res,next){
 
     movieTitle = req.body.title;
     console.log(movieTitle);
-    mysql.pool.query('SELECT `movie_id` FROM `Movie` WHERE `title` = ?', [movieTitle], function(err, rows, fields){
+    mysql.pool.query('SELECT `movie_id` FROM `Movie` WHERE `title` = ?', 
+      [movieTitle], function(err, rows, fields){
       if(err){
         next(err);
         return;
@@ -107,32 +125,40 @@ app.post('/addMovie', function(req,res,next){
       mysql.pool.query("INSERT INTO `Movie_Production_Co` (movie_id, production_co_id) VALUES (?, ?)", 
         [movieIdVal, productionCoId], function(err, result){
         if(err){
-        console.log("Error occurred.");
-        next(err);
-        return;
-      }
-    
+          console.log("Error occurred.");
+          next(err);
+          return;
+        }
+        mysql.pool.query("INSERT INTO `Movie_Genre` (movie_id, genre_id) VALUES (?, ?)", 
+          [movieIdVal, genreIdVal], function(err, result){
+          if(err){
+            console.log("Error occurred.");
+            next(err);
+            return;
+          }
+          res.render("addSuccess");
+        });
       });
     });
-
-  });
-  res.render("addSuccess");
+  });  
 });
 
 app.post('/deleteMovie', function(req,res,next){
-  var context = {};
-  var movieIdVal;
-  var movieTitle
-  var productionCoId = req.body.production_co_id;
-
-  mysql.pool.query("DELETE FROM `Movie` WHERE `movie_id` = ?", [req.body.movie_id], function(err, result){
-    
+  mysql.pool.query("DELETE FROM `Movie` WHERE `movie_id` = ?", [req.body.movie_id], function(err, result){   
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
-    res.render("deleteSuccess");
+    mysql.pool.query('DELETE FROM `Director` WHERE `director_id` NOT IN (SELECT `director_id` FROM `Movie_Director`)', 
+      function(err, result){
+      if(err){
+        next(err);
+        return;
+      }
+
+      res.render("deleteSuccess");
+    });
   });
 });
 
@@ -181,7 +207,7 @@ app.get('/director',function(req,res,next){
   var tableData = [];
   var tableData2 = [];
 
-  mysql.pool.query('SELECT * FROM `Director`', function(err, rows, fields){
+  mysql.pool.query('SELECT f_name, l_name, YEAR(birthdate) AS year, MONTH(birthdate) AS month, DAY(birthdate) AS day FROM `Director`', function(err, rows, fields){
     if(err){
       next(err);
       return;
@@ -222,8 +248,8 @@ app.post('/addDirector', function(req,res,next){
   var directorName;
   var movieId = req.body.movie_id;
 
-  mysql.pool.query("INSERT INTO `Director` (f_name, l_name, age) VALUES (?, ?, ?)", 
-    [req.body.f_name, req.body.l_name, req.body.age], function(err, result){
+  mysql.pool.query("INSERT INTO `Director` (f_name, l_name, birthdate) VALUES (?, ?, ?)", 
+    [req.body.f_name, req.body.l_name, req.body.birthdate], function(err, result){
     
     if(err){
       console.log("Error occurred.");
@@ -251,11 +277,8 @@ app.post('/addDirector', function(req,res,next){
     
       });
     });
-
-  });
-  
+  }); 
 });
-
 
 app.get('/productionCo',function(req,res,next){
   var context = {};
@@ -284,8 +307,8 @@ app.get('/productionCo',function(req,res,next){
 app.post('/addProductionCo', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO Production_Company (name, ceo_f_name, ceo_l_name, headquarters) VALUES (?, ?, ?, ?)", 
-    [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.headquarters], function(err, result){
+  mysql.pool.query("INSERT INTO Production_Company (name, ceo_f_name, ceo_l_name, hq_city, hq_state) VALUES (?, ?, ?, ?, ?)", 
+    [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.hq_city, req.body.hq_state], function(err, result){
     if(err){
       console.log("Error occurred.");
       next(err);
@@ -293,6 +316,14 @@ app.post('/addProductionCo', function(req,res,next){
     }
     res.render("addSuccess");
   }); 
+});
+
+app.post('/updateProductionCoPage', function(req,res,next){
+  res.render("updatePage");
+});
+
+app.post('/updateProductionCoPage', function(req,res,next){
+  res.render("updatePage");
 });
 
 app.get('/movieSequel',function(req,res,next){
@@ -427,6 +458,24 @@ app.post('/addMovieDirector', function(req,res,next){
       return;
     }
     res.render("addSuccess");
+  }); 
+});
+
+app.post('/removeMovieDirector', function(req,res,next){
+  var context = {};
+  var directorIdVal;
+  var directorName;
+  var movieId = req.body.movie_id;
+
+  mysql.pool.query("DELETE FROM `Movie_Director` WHERE `movie_id` = ? AND `director_id` = ?", 
+    [req.body.movie_id, req.body.director_id], function(err, result){
+    
+    if(err){
+      console.log("Error occurred.");
+      next(err);
+      return;
+    }
+    res.render('deleteSuccess', context);
   }); 
 });
 
@@ -627,7 +676,8 @@ app.get('/create-tables',function(req,res,next){
           "`name` VARCHAR(255) NOT NULL UNIQUE,"+
           "`ceo_f_name` VARCHAR(255),"+
           "`ceo_l_name` VARCHAR(255),"+
-          "`headquarters` VARCHAR(255) NOT NULL,"+
+          "`hq_city` VARCHAR(255) NOT NULL,"+
+          "`hq_state` VARCHAR(255) NOT NULL,"+
           "PRIMARY KEY(`production_co_id`));";
           mysql.pool.query(string3, function(err){
             mysql.pool.query("DROP TABLE IF EXISTS `Director`", function(err){
@@ -635,12 +685,12 @@ app.get('/create-tables',function(req,res,next){
               "`director_id` INT AUTO_INCREMENT,"+
               "`f_name` VARCHAR(255) NOT NULL,"+
               "`l_name` VARCHAR(255) NOT NULL,"+
-              "`age` INT NOT NULL,"+
+              "`birthdate` DATE NOT NULL,"+
               "PRIMARY KEY(`director_id`));";
               mysql.pool.query(string4, function(err){
                 mysql.pool.query("DROP TABLE IF EXISTS `Sequels`", function(err){
                   var string5 = "CREATE TABLE `Sequels`("+
-                  "`movie_id` INT,"+
+                  "`movie_id` INT NOT NULL,"+
                   "`sequel_id` INT,"+
                   "FOREIGN KEY(`movie_id`)"+
                   "  REFERENCES `Movie`(`movie_id`)"+
@@ -652,7 +702,7 @@ app.get('/create-tables',function(req,res,next){
                     mysql.pool.query("DROP TABLE IF EXISTS `Movie_Production_Co`", function(err){
                       var string6 = "CREATE TABLE `Movie_Production_Co`("+
                       "`movie_id` INT,"+
-                      "`production_co_id` INT,"+
+                      "`production_co_id` INT NOT NULL,"+
                       "FOREIGN KEY(`movie_id`)"+
                       "  REFERENCES `Movie`(`movie_id`)"+
                       "ON UPDATE CASCADE ON DELETE CASCADE," +
@@ -662,7 +712,7 @@ app.get('/create-tables',function(req,res,next){
                       mysql.pool.query(string6, function(err){
                         mysql.pool.query("DROP TABLE IF EXISTS `Movie_Director`", function(err){
                           var string7 = "CREATE TABLE `Movie_Director`("+
-                          "`movie_id` INT,"+
+                          "`movie_id` INT NOT NULL,"+
                           "`director_id` INT,"+
                           "FOREIGN KEY(`movie_id`)"+
                           "  REFERENCES `Movie`(`movie_id`)"+

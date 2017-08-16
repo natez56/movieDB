@@ -40,11 +40,19 @@
         Title:<input type="text" name="title" id="title"><br>
         Duration (Minutes):<input type="text" name="duration" id="duration"><br>
         Release Year:<input type="text" name="release_year" id="release_year"><br>
+        
+        Genre:<select name="genre_id">
+            {{#each row3Name}}
+            <option name="genre_id" value="{{this.genre_id}}">{{this.type}}</option>
+            {{/each}}
+        </select>
+        <br>
         Production Company:<select name="production_co_id">
             {{#each rowName}}
             <option name="production_co_id" value="{{this.production_co_id}}">{{this.name}}</option>
             {{/each}}
         </select>
+        <br>
         <input type="submit" value="Submit">
     </fieldset>
 </form>

@@ -17,16 +17,14 @@
 <table id="table">
     <caption>Directors</caption>
     <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Age</th>
+        <th>Name</th>
+        <th>Birthdate (YYYY-MM-DD)</th>
     </tr>
 
     {{#each table}}
     <tr> 
-        <td>{{this.f_name}}</td>
-        <td>{{this.l_name}}</td>
-        <td>{{this.age}}</td>
+        <td>{{this.f_name}} {{this.l_name}}</td>
+        <td>{{this.year}}-{{this.month}}-{{this.day}}</td>
     </tr>
     {{/each}}
 </table>
@@ -38,11 +36,13 @@
         <legend>Add Director</legend>
         First Name:<input type="text" name="f_name" id="f_name"><br>
         Last Name:<input type="text" name="l_name" id="l_name"><br>
-        Age:<input type="text" name="age" id="age"><br>
+        Birthdate(YYYY-MM-DD):<input type="text" name="birthdate" id="birthdate"><br>
         Movie they have directed:<select name="movie_id">
             {{#each rowName}}
             <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
             {{/each}}
+        </select>
+        <br>
         <input type="submit" value="Submit">
     </fieldset>
 </form>

@@ -15,25 +15,14 @@
 <br>
 <br>
 
-<table id="table">
-    <caption>Genres</caption>
-    <tr>
-        <th>Type</th>
-    </tr>
-
-    {{#each table}}
-    <tr> 
-        <td>{{this.type}}</td>
-    </tr>
-    {{/each}}
-</table>
-
-<br><br>
-
-<form action="/addGenre" method="post">
+<form action="/updateProductionCo" method="post">
     <fieldset>
-        <legend>Add Genre</legend>
-        Type:<input type="text" name="type" id="type">
+        <legend>Add Production Company</legend>
+        Name:<input type="text" name="name" id="name"><br>
+        CEO First Name:<input type="text" name="ceo_f_name" id="ceo_f_name"><br>
+        CEO Last Name:<input type="text" name="ceo_l_name" id="ceo_l_name"><br>
+        Headquarters City:<input type = "text" name="hq_city" id="hq_city"><br>
+        Headquarters State:<input type = "text" name="hq_state" id="hq_state"><br>
         <input type="submit" value="Submit">
     </fieldset>
 </form>
