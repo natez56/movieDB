@@ -17,12 +17,15 @@
 
 <form action="/updateProductionCo" method="post">
     <fieldset>
-        <legend>Add Production Company</legend>
-        Name:<input type="text" name="name" id="name"><br>
-        CEO First Name:<input type="text" name="ceo_f_name" id="ceo_f_name"><br>
-        CEO Last Name:<input type="text" name="ceo_l_name" id="ceo_l_name"><br>
-        Headquarters City:<input type = "text" name="hq_city" id="hq_city"><br>
-        Headquarters State:<input type = "text" name="hq_state" id="hq_state"><br>
+        <legend>Update Production Company</legend>
+        {{#each rowName}}
+        <input type="hidden" name="production_co_id" value="{{this.production_co_id}}">
+        Name:<input type="text" name="name" id="name" value="{{this.name}}"><br>
+        CEO First Name:<input type="text" name="ceo_f_name" id="ceo_f_name" value="{{this.ceo_f_name}}"><br>
+        CEO Last Name:<input type="text" name="ceo_l_name" id="ceo_l_name" value="{{this.ceo_l_name}}"><br>
+        Headquarters City:<input type = "text" name="hq_city" id="hq_city" value="{{this.hq_city}}"><br>
+        Headquarters State:<input type = "text" name="hq_state" id="hq_state" value="{{this.hq_state}}"><br>
+        {{/each}}
         <input type="submit" value="Submit">
     </fieldset>
 </form>

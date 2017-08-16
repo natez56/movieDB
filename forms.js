@@ -283,6 +283,7 @@ app.post('/addDirector', function(req,res,next){
 app.get('/productionCo',function(req,res,next){
   var context = {};
   var tableData = [];
+  var tableData2 = [];
 
   mysql.pool.query('SELECT * FROM Production_Company', function(err, rows, fields){
     if(err){
@@ -299,8 +300,24 @@ app.get('/productionCo',function(req,res,next){
 
     context.results = JSON.stringify(rows);
     context.table = tableData;
+    mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
+      if(err){
+        next(err);
+        return;
+      }
+    
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    res.render('productionCo', context);
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
+
+      context.results = JSON.stringify(rows);
+      context.rowName = tableData2;
+
+      res.render('productionCo', context);
+    });
   });
 });
 
@@ -319,11 +336,36 @@ app.post('/addProductionCo', function(req,res,next){
 });
 
 app.post('/updateProductionCoPage', function(req,res,next){
-  res.render("updatePage");
+  var context = {};
+  var tableData = [];
+  mysql.pool.query('SELECT * FROM `Production_Company` WHERE `production_co_id` = ?', [req.body.production_co_id], function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    
+    var data = JSON.stringify(rows);
+    var json = JSON.parse(data);
+
+    for (var key in json) {
+      tableData.push(json[key]);
+    }
+
+    context.results = JSON.stringify(rows);
+    context.rowName = tableData;
+    res.render("updatePage", context);
+  });
 });
 
-app.post('/updateProductionCoPage', function(req,res,next){
-  res.render("updatePage");
+app.post('/updateProductionCo', function(req,res,next){
+  mysql.pool.query('UPDATE `Production_Company` SET `name` = ?, `ceo_f_name` = ?, `ceo_l_name` = ?, `hq_city` = ?, `hq_state` = ? WHERE `production_co_id` = ?', 
+    [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.hq_city, req.body.hq_state, req.body.production_co_id], function(err, rows, fields){
+    if(err){
+      next(err);
+      return;
+    }
+    res.render("updateSuccess");
+  });
 });
 
 app.get('/movieSequel',function(req,res,next){
