@@ -197,9 +197,10 @@ app.post('/addGenre', function(req,res,next){
       console.log("Error occurred.");
       next(err);
       return;
-    }
+    } 
     res.render("addSuccess");
   });
+  
 });
 
 app.get('/director',function(req,res,next){
@@ -416,8 +417,9 @@ app.get('/movieSequel',function(req,res,next){
 app.post('/addSequel', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO `Sequels` (movie_id, sequel_id) VALUES (?, ?)", 
-    [req.body.movie_id, req.body.sequel_id], function(err, result){
+
+  mysql.pool.query("INSERT INTO `Sequels` (movie_id, sequel_id) VALUES ((SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?), (SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?))", 
+    [req.body.movie_id, req.body.sequel_id, req.body.movie_id, req.body.sequel_id], function(err, result){
     
     if(err){
       console.log("Error occurred.");
@@ -739,7 +741,8 @@ app.get('/create-tables',function(req,res,next){
                   "  ON UPDATE CASCADE ON DELETE CASCADE," +
                   "FOREIGN KEY(`sequel_id`)"+
                   "  REFERENCES `Movie`(`movie_id`)" +
-                  "  ON UPDATE CASCADE ON DELETE CASCADE);";
+                  "  ON UPDATE CASCADE ON DELETE CASCADE," +
+                  "UNIQUE(`movie_id`, `sequel_id`));";
                   mysql.pool.query(string5, function(err){
                     mysql.pool.query("DROP TABLE IF EXISTS `Movie_Production_Co`", function(err){
                       var string6 = "CREATE TABLE `Movie_Production_Co`("+
@@ -750,7 +753,8 @@ app.get('/create-tables',function(req,res,next){
                       "ON UPDATE CASCADE ON DELETE CASCADE," +
                       "FOREIGN KEY(`production_co_id`)"+
                       "  REFERENCES `Production_Company`(`production_co_id`)" +
-                      "ON UPDATE CASCADE ON DELETE CASCADE);";
+                      "ON UPDATE CASCADE ON DELETE CASCADE," +
+                      "UNIQUE(`movie_id`, `production_co_id`));";
                       mysql.pool.query(string6, function(err){
                         mysql.pool.query("DROP TABLE IF EXISTS `Movie_Director`", function(err){
                           var string7 = "CREATE TABLE `Movie_Director`("+
@@ -761,7 +765,8 @@ app.get('/create-tables',function(req,res,next){
                           "ON UPDATE CASCADE ON DELETE CASCADE," +
                           "FOREIGN KEY(`director_id`)"+
                           "  REFERENCES `Director`(`director_id`)" +
-                          "ON UPDATE CASCADE ON DELETE CASCADE);";
+                          "ON UPDATE CASCADE ON DELETE CASCADE, " +
+                          "UNIQUE(`movie_id`, `director_id`));";
                           mysql.pool.query(string7, function(err){
                             mysql.pool.query("DROP TABLE IF EXISTS `Movie_Genre`", function(err){
                               var string8 = "CREATE TABLE `Movie_Genre`("+
@@ -772,7 +777,8 @@ app.get('/create-tables',function(req,res,next){
                               "ON UPDATE CASCADE ON DELETE CASCADE," +
                               "FOREIGN KEY(`genre_id`)"+
                               "  REFERENCES `Genre`(`genre_id`)" +
-                              "ON UPDATE CASCADE ON DELETE CASCADE);";
+                              "ON UPDATE CASCADE ON DELETE CASCADE" +
+                              "UNIQUE(`movie_id`, `genre_id`));";
                               mysql.pool.query(string8, function(err){
                                 context.results = "Table reset";
                                 res.render('home',context);
@@ -801,9 +807,8 @@ app.use(function(req,res){
 
 app.use(function(err, req, res, next){
   console.error(err.stack);
-  res.type('plain/text');
   res.status(500);
-  res.render('500');
+  res.render('errorPage', { error: err });
 });
 
 app.listen(app.get('port'), function(){

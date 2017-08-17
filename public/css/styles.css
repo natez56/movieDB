@@ -12,3 +12,12 @@ ul {
 	padding: 0;
 }
 
+ul {
+	list-style-type: circle;
+	margin: 10;
+	padding: 10;
+}
+
+.home li {	
+	display: block;
+}
