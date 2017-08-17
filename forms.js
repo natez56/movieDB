@@ -16,10 +16,12 @@ app.set('view engine', 'handlebars');
 app.set('port', 9225);
 app.use(express.static('public'));
 
+// Main page of database.
 app.get('/',function(req,res,next){
-    res.render('home');
+  res.render('home');
 });
 
+// Movie page with movie table, add movie form, and remove movie form.
 app.get('/movie',function(req,res,next){
   var context = {};
   var tableData = [];
@@ -40,8 +42,8 @@ app.get('/movie',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
       if(err){
         next(err);
@@ -55,8 +57,8 @@ app.get('/movie',function(req,res,next){
         tableData2.push(json[key]);
       }
 
-      context.results = JSON.stringify(rows);
       context.rowName = tableData2;
+
       mysql.pool.query('SELECT `genre_id`, `type` FROM `Genre`', function(err, rows, fields){
         if(err){
           next(err);
@@ -70,8 +72,8 @@ app.get('/movie',function(req,res,next){
           tableData4.push(json[key]);
         }
 
-        context.results = JSON.stringify(rows);
         context.row3Name = tableData4;
+
         mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
           if(err){
             next(err);
@@ -85,8 +87,8 @@ app.get('/movie',function(req,res,next){
             tableData3.push(json[key]);
           }
 
-          context.results = JSON.stringify(rows);
           context.row2Name = tableData3;
+
           res.render('movie', context);
         });
       });
@@ -94,14 +96,14 @@ app.get('/movie',function(req,res,next){
   });
 });
 
+// Code to handle form data for new movie.
 app.post('/addMovie', function(req,res,next){
   var context = {};
   var movieIdVal;
-  var movieTitle
   var productionCoId = req.body.production_co_id;
   var genreIdVal = req.body.genre_id;
 
-  mysql.pool.query("INSERT INTO `Movie` (title, duration, release_year) VALUES (?, ?, ?)", 
+  mysql.pool.query("INSERT INTO `Movie` (`title`, `duration`, `release_year`) VALUES (?, ?, ?)", 
     [req.body.title, req.body.duration, req.body.release_year], function(err, result){
     if(err){
       console.log("Error occurred.");
@@ -109,33 +111,30 @@ app.post('/addMovie', function(req,res,next){
       return;
     }
 
-    movieTitle = req.body.title;
-    console.log(movieTitle);
-    mysql.pool.query('SELECT `movie_id` FROM `Movie` WHERE `title` = ?', 
-      [movieTitle], function(err, rows, fields){
+    mysql.pool.query('SELECT MAX(`movie_id`) AS `movie_id` FROM `Movie`', function(err, rows, fields){
       if(err){
         next(err);
         return;
       }
 
       movieIdVal = rows[0].movie_id;
-      console.log(movieIdVal);
-      console.log(productionCoId);
 
-      mysql.pool.query("INSERT INTO `Movie_Production_Co` (movie_id, production_co_id) VALUES (?, ?)", 
+      mysql.pool.query("INSERT INTO `Movie_Production_Co` (`movie_id`, `production_co_id`) VALUES (?, ?)", 
         [movieIdVal, productionCoId], function(err, result){
         if(err){
           console.log("Error occurred.");
           next(err);
           return;
         }
-        mysql.pool.query("INSERT INTO `Movie_Genre` (movie_id, genre_id) VALUES (?, ?)", 
+
+        mysql.pool.query("INSERT INTO `Movie_Genre` (`movie_id`, `genre_id`) VALUES (?, ?)", 
           [movieIdVal, genreIdVal], function(err, result){
           if(err){
             console.log("Error occurred.");
             next(err);
             return;
           }
+
           res.render("addSuccess");
         });
       });
@@ -143,6 +142,8 @@ app.post('/addMovie', function(req,res,next){
   });  
 });
 
+// Code to delete movie.  If director is no longer associated with a movie then
+// they are deleted.
 app.post('/deleteMovie', function(req,res,next){
   mysql.pool.query("DELETE FROM `Movie` WHERE `movie_id` = ?", [req.body.movie_id], function(err, result){   
     if(err){
@@ -150,6 +151,7 @@ app.post('/deleteMovie', function(req,res,next){
       next(err);
       return;
     }
+
     mysql.pool.query('DELETE FROM `Director` WHERE `director_id` NOT IN (SELECT `director_id` FROM `Movie_Director`)', 
       function(err, result){
       if(err){
@@ -162,13 +164,12 @@ app.post('/deleteMovie', function(req,res,next){
   });
 });
 
-
-
+// Code to display genre table.
 app.get('/genre',function(req,res,next){
   var context = {};
   var tableData = [];
 
-  mysql.pool.query('SELECT * FROM Genre', function(err, rows, fields){
+  mysql.pool.query('SELECT * FROM `Genre`', function(err, rows, fields){
     if(err){
       next(err);
       return;
@@ -181,34 +182,35 @@ app.get('/genre',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
 
     res.render('genre', context);
   });
 });
 
+// Adds a genre.
 app.post('/addGenre', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO Genre (type) VALUES (?)", 
+  mysql.pool.query("INSERT INTO `Genre` (`type`) VALUES (?)", 
     [req.body.type], function(err, result){
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     } 
+
     res.render("addSuccess");
-  });
-  
+  }); 
 });
 
+// Displays director tables and form to add director.
 app.get('/director',function(req,res,next){
   var context = {};
   var tableData = [];
   var tableData2 = [];
 
-  mysql.pool.query('SELECT f_name, l_name, YEAR(birthdate) AS year, MONTH(birthdate) AS month, DAY(birthdate) AS day FROM `Director`', function(err, rows, fields){
+  mysql.pool.query('SELECT `f_name`, `l_name`, YEAR(`birthdate`) AS year, MONTH(`birthdate`) AS month, DAY(`birthdate`) AS day FROM `Director`', function(err, rows, fields){
     if(err){
       next(err);
       return;
@@ -221,35 +223,35 @@ app.get('/director',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      if(err){
+        next(err);
+        return;
+      }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    res.render('director', context);
-  });
+      context.rowName = tableData2;
+
+      res.render('director', context);
+    });
   });  
 });
 
+// Handles form data to add director, updates movie/director relationship.
 app.post('/addDirector', function(req,res,next){
   var context = {};
   var directorIdVal;
-  var directorName;
   var movieId = req.body.movie_id;
 
-  mysql.pool.query("INSERT INTO `Director` (f_name, l_name, birthdate) VALUES (?, ?, ?)", 
+  mysql.pool.query("INSERT INTO `Director` (`f_name`, `l_name`, `birthdate`) VALUES (?, ?, ?)", 
     [req.body.f_name, req.body.l_name, req.body.birthdate], function(err, result){
     
     if(err){
@@ -258,8 +260,7 @@ app.post('/addDirector', function(req,res,next){
       return;
     }
 
-    directorName = req.body.l_name;
-    mysql.pool.query('SELECT `director_id` FROM `Director` WHERE `l_name` = ?', [directorName], function(err, rows, fields){
+    mysql.pool.query('SELECT MAX(`director_id`) AS `director_id` FROM `Director`', function(err, rows, fields){
       if(err){
         next(err);
         return;
@@ -267,26 +268,27 @@ app.post('/addDirector', function(req,res,next){
 
       directorIdVal = rows[0].director_id;
 
-      mysql.pool.query("INSERT INTO `Movie_Director` (movie_id, director_id) VALUES (?, ?)", 
+      mysql.pool.query("INSERT INTO `Movie_Director` (`movie_id`, `director_id`) VALUES (?, ?)", 
         [movieId, directorIdVal], function(err, result){
         if(err){
-        console.log("Error occurred.");
-        next(err);
-        return;
-      }
-      res.render("addSuccess");
-    
+          console.log("Error occurred.");
+          next(err);
+          return;
+        }
+
+        res.render("addSuccess");  
       });
     });
   }); 
 });
 
+// Displays table data for production companies and forms to add/update company.
 app.get('/productionCo',function(req,res,next){
   var context = {};
   var tableData = [];
   var tableData2 = [];
 
-  mysql.pool.query('SELECT * FROM Production_Company', function(err, rows, fields){
+  mysql.pool.query('SELECT * FROM `Production_Company`', function(err, rows, fields){
     if(err){
       next(err);
       return;
@@ -299,8 +301,8 @@ app.get('/productionCo',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
       if(err){
         next(err);
@@ -314,7 +316,6 @@ app.get('/productionCo',function(req,res,next){
         tableData2.push(json[key]);
       }
 
-      context.results = JSON.stringify(rows);
       context.rowName = tableData2;
 
       res.render('productionCo', context);
@@ -322,23 +323,27 @@ app.get('/productionCo',function(req,res,next){
   });
 });
 
+// Handles form data to add a production company.
 app.post('/addProductionCo', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO Production_Company (name, ceo_f_name, ceo_l_name, hq_city, hq_state) VALUES (?, ?, ?, ?, ?)", 
+  mysql.pool.query("INSERT INTO `Production_Company` (`name`, `ceo_f_name`, `ceo_l_name`, `hq_city`, `hq_state`) VALUES (?, ?, ?, ?, ?)", 
     [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.hq_city, req.body.hq_state], function(err, result){
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
+
     res.render("addSuccess");
   }); 
 });
 
+// Creates a page with prepopulated text boxes for update.
 app.post('/updateProductionCoPage', function(req,res,next){
   var context = {};
   var tableData = [];
+
   mysql.pool.query('SELECT * FROM `Production_Company` WHERE `production_co_id` = ?', [req.body.production_co_id], function(err, rows, fields){
     if(err){
       next(err);
@@ -352,12 +357,13 @@ app.post('/updateProductionCoPage', function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.rowName = tableData;
+
     res.render("updatePage", context);
   });
 });
 
+// Handles form data to update production companies.
 app.post('/updateProductionCo', function(req,res,next){
   mysql.pool.query('UPDATE `Production_Company` SET `name` = ?, `ceo_f_name` = ?, `ceo_l_name` = ?, `hq_city` = ?, `hq_state` = ? WHERE `production_co_id` = ?', 
     [req.body.name, req.body.ceo_f_name, req.body.ceo_l_name, req.body.hq_city, req.body.hq_state, req.body.production_co_id], function(err, rows, fields){
@@ -365,10 +371,12 @@ app.post('/updateProductionCo', function(req,res,next){
       next(err);
       return;
     }
+
     res.render("updateSuccess");
   });
 });
 
+// Displays table data showing movies with sequels.
 app.get('/movieSequel',function(req,res,next){
   var context = {};
   var tableData = [];
@@ -376,8 +384,8 @@ app.get('/movieSequel',function(req,res,next){
   var tableData3 = [];
 
   // Change T1 LEFT JOIN in brackerts to INNER JOIN to only select movies with sequels
-  var titleQuery = "SELECT T1.title AS original, T2.title AS sequel FROM (SELECT m.title, m.movie_id FROM Movie m INNER JOIN Sequels s ON m.movie_id = s.movie_id) AS T1 LEFT JOIN " +
-  "(SELECT mo.title, se.movie_id FROM Movie mo INNER JOIN Sequels se ON mo.movie_id = se.sequel_id) AS T2 ON T1.movie_id = T2.movie_id";
+  var titleQuery = "SELECT DISTINCT T1.title AS original, T2.title AS sequel FROM (SELECT m.title, m.movie_id FROM Movie m INNER JOIN Sequels s ON m.movie_id = s.movie_id) AS T1 INNER JOIN " +
+    "(SELECT mo.title, se.movie_id FROM Movie mo INNER JOIN Sequels se ON mo.movie_id = se.sequel_id) AS T2 ON T1.movie_id = T2.movie_id";
 
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
@@ -389,38 +397,39 @@ app.get('/movieSequel',function(req,res,next){
     var json = JSON.parse(data);
 
     for (var key in json) {
-      console.log(json[key]);
       tableData.push(json[key]);
     }
 
     context.table = tableData;
+
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      if(err){
+        next(err);
+        return;
+      }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    res.render('movieSequel', context);
+      context.rowName = tableData2;
+
+      res.render('movieSequel', context);
     });
   });
 });
 
+// Allows new sequel relationship to be established.
 app.post('/addSequel', function(req,res,next){
   var context = {};
+  var sequelQuery = "INSERT INTO `Sequels` (`movie_id`, `sequel_id`) VALUES " +
+  "((SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?), " +
+  "(SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?))";
 
-
-  mysql.pool.query("INSERT INTO `Sequels` (movie_id, sequel_id) VALUES ((SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?), (SELECT `movie_id` FROM `Movie` WHERE `movie_id` = ? AND `movie_id` != ?))", 
-    [req.body.movie_id, req.body.sequel_id, req.body.movie_id, req.body.sequel_id], function(err, result){
-    
+  mysql.pool.query(sequelQuery, [req.body.movie_id, req.body.sequel_id, req.body.sequel_id, req.body.movie_id], function(err, result){   
     if(err){
       console.log("Error occurred.");
       next(err);
@@ -430,6 +439,7 @@ app.post('/addSequel', function(req,res,next){
   }); 
 });
 
+// Displays movie director relationship table.
 app.get('/movieDirector',function(req,res,next){
   var context = {};
   var tableData = [];
@@ -452,59 +462,61 @@ app.get('/movieDirector',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      if(err){
+        next(err);
+        return;
+      }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    mysql.pool.query('SELECT `director_id`, `f_name`, `l_name` FROM `Director`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      context.rowName = tableData2;
+
+      mysql.pool.query('SELECT `director_id`, `f_name`, `l_name` FROM `Director`', function(err, rows, fields){
+        if(err){
+          next(err);
+          return;
+        }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+        var data = JSON.stringify(rows);
+        var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData3.push(json[key]);
-    }
+        for (var key in json) {
+          tableData3.push(json[key]);
+        }
 
-    context.results = JSON.stringify(rows);
-    context.row2Name = tableData3;
-    res.render('movieDirector', context);
-    });
+        context.row2Name = tableData3;
+
+        res.render('movieDirector', context);
+      });
     });
   });
 });
 
+// Handles form data to add new movie director relationship.
 app.post('/addMovieDirector', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO `Movie_Director` (movie_id, director_id) VALUES (?, ?)", 
-    [req.body.movie_id, req.body.director_id], function(err, result){
-    
+  mysql.pool.query("INSERT INTO `Movie_Director` (`movie_id`, `director_id`) VALUES (?, ?)", 
+    [req.body.movie_id, req.body.director_id], function(err, result){   
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
+
     res.render("addSuccess");
   }); 
 });
 
+// Allows a movie director relationship to be deleted.
 app.post('/removeMovieDirector', function(req,res,next){
   var context = {};
   var directorIdVal;
@@ -512,17 +524,26 @@ app.post('/removeMovieDirector', function(req,res,next){
   var movieId = req.body.movie_id;
 
   mysql.pool.query("DELETE FROM `Movie_Director` WHERE `movie_id` = ? AND `director_id` = ?", 
-    [req.body.movie_id, req.body.director_id], function(err, result){
-    
+    [req.body.movie_id, req.body.director_id], function(err, result){   
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
-    res.render('deleteSuccess', context);
+
+    mysql.pool.query('DELETE FROM `Director` WHERE `director_id` NOT IN (SELECT `director_id` FROM `Movie_Director`)', 
+      function(err, result){
+      if(err){
+        next(err);
+        return;
+      }
+
+      res.render('deleteSuccess', context);
+    });
   }); 
 });
 
+// Displays table for movie genre relationship.
 app.get('/movieGenre',function(req,res,next){
   var context = {};
   var tableData = [];
@@ -545,8 +566,8 @@ app.get('/movieGenre',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
       if(err){
         next(err);
@@ -560,8 +581,8 @@ app.get('/movieGenre',function(req,res,next){
         tableData2.push(json[key]);
       }
 
-      context.results = JSON.stringify(rows);
       context.rowName = tableData2;
+
       mysql.pool.query('SELECT `genre_id`, `type` FROM `Genre`', function(err, rows, fields){
         if(err){
           next(err);
@@ -575,29 +596,31 @@ app.get('/movieGenre',function(req,res,next){
           tableData3.push(json[key]);
         }
 
-        context.results = JSON.stringify(rows);
         context.row2Name = tableData3;
+
         res.render('movieGenre', context);
       });
     });
   });
 });
 
+// Allow new relationship for movie/genre.
 app.post('/addMovieGenre', function(req,res,next){
   var context = {};
 
   mysql.pool.query("INSERT INTO `Movie_Genre` (movie_id, genre_id) VALUES (?, ?)", 
-    [req.body.movie_id, req.body.genre_id], function(err, result){
-    
+    [req.body.movie_id, req.body.genre_id], function(err, result){  
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
+
     res.render("addSuccess");
   }); 
 });
 
+// Allows search for movies by genre.
 app.post('/searchMovieGenre', function(req,res,next){
   var context = {};
   var tableData = [];
@@ -623,6 +646,7 @@ app.post('/searchMovieGenre', function(req,res,next){
   }); 
 });
 
+// Displays relationship table for movie production co and related forms.
 app.get('/movieProductionCo',function(req,res,next){
   var context = {};
   var tableData = [];
@@ -631,6 +655,7 @@ app.get('/movieProductionCo',function(req,res,next){
   var titleQuery = "SELECT m.title, p.name FROM `Movie` m INNER JOIN `Movie_Production_Co` mp ON" +
   " m.movie_id = mp.movie_id INNER JOIN `Production_Company` p ON mp.production_co_id = p.production_co_id" +
   " ORDER BY p.name ASC;";
+
   mysql.pool.query(titleQuery, function(err, rows, fields){
     if(err){
       next(err);
@@ -644,59 +669,61 @@ app.get('/movieProductionCo',function(req,res,next){
       tableData.push(json[key]);
     }
 
-    context.results = JSON.stringify(rows);
     context.table = tableData;
+
     mysql.pool.query('SELECT `movie_id`, `title` FROM `Movie`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      if(err){
+        next(err);
+        return;
+      }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+      var data = JSON.stringify(rows);
+      var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData2.push(json[key]);
-    }
+      for (var key in json) {
+        tableData2.push(json[key]);
+      }
 
-    context.results = JSON.stringify(rows);
-    context.rowName = tableData2;
-    mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
-    if(err){
-      next(err);
-      return;
-    }
+      context.rowName = tableData2;
+
+      mysql.pool.query('SELECT `production_co_id`, `name` FROM `Production_Company`', function(err, rows, fields){
+        if(err){
+          next(err);
+          return;
+        }
     
-    var data = JSON.stringify(rows);
-    var json = JSON.parse(data);
+        var data = JSON.stringify(rows);
+        var json = JSON.parse(data);
 
-    for (var key in json) {
-      tableData3.push(json[key]);
-    }
+        for (var key in json) {
+          tableData3.push(json[key]);
+        }
 
-    context.results = JSON.stringify(rows);
-    context.row2Name = tableData3;
-    res.render('movieProductionCo', context);
-    });
+        context.row2Name = tableData3;
+
+        res.render('movieProductionCo', context);
+      });
     });
   });
 });
 
+// Handles form data to add relationship for movie/production co.
 app.post('/addMovieProductionCo', function(req,res,next){
   var context = {};
 
-  mysql.pool.query("INSERT INTO `Movie_Production_Co` (movie_id, production_co_id) VALUES (?, ?)", 
-    [req.body.movie_id, req.body.production_co_id], function(err, result){
-    
+  mysql.pool.query("INSERT INTO `Movie_Production_Co` (`movie_id`, `production_co_id`) VALUES (?, ?)", 
+    [req.body.movie_id, req.body.production_co_id], function(err, result){   
     if(err){
       console.log("Error occurred.");
       next(err);
       return;
     }
+
     res.render("addSuccess");
   }); 
 });
 
+// Creates tables for the website.  Commented out to prevent user from deleting data.
 app.get('/create-tables',function(req,res,next){
   var context = {};
 
@@ -771,13 +798,13 @@ app.get('/create-tables',function(req,res,next){
                             mysql.pool.query("DROP TABLE IF EXISTS `Movie_Genre`", function(err){
                               var string8 = "CREATE TABLE `Movie_Genre`("+
                               "`movie_id` INT,"+
-                              "`genre_id` INT,"+
+                              "`genre_id` INT NOT NULL,"+
                               "FOREIGN KEY(`movie_id`)"+
                               "  REFERENCES `Movie`(`movie_id`)"+
                               "ON UPDATE CASCADE ON DELETE CASCADE," +
                               "FOREIGN KEY(`genre_id`)"+
                               "  REFERENCES `Genre`(`genre_id`)" +
-                              "ON UPDATE CASCADE ON DELETE CASCADE" +
+                              "ON UPDATE CASCADE ON DELETE CASCADE," +
                               "UNIQUE(`movie_id`, `genre_id`));";
                               mysql.pool.query(string8, function(err){
                                 context.results = "Table reset";
@@ -800,6 +827,7 @@ app.get('/create-tables',function(req,res,next){
 });
 });    
 
+// Error handling below.
 app.use(function(req,res){
   res.status(404);
   res.render('404');

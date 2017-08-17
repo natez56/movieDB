@@ -1,5 +1,5 @@
 <div>
-  <ul>
+  <ul class="tableLinks">
     <li><a href="/">Home</a></li>
     <li><a href="movie">Movies</a></li>
     <li><a href="genre">Genres</a></li>
@@ -43,7 +43,7 @@
         
         Sequel:<select name="sequel_id">
             {{#each rowName}}
-            <option name="movie_id" value="{{this.movie_id}}">{{this.title}}</option>
+            <option name="sequel_id" value="{{this.movie_id}}">{{this.title}}</option>
             {{/each}}
         </select>
         

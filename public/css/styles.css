@@ -2,22 +2,17 @@ table, th, td {
     border: 1px solid black;
 }
 
-li {
+.tableLinks li {
 	display: inline;
 	padding: 10px;
 }
 
-ul {
-	margin: 0;
-	padding: 0;
-}
-
-ul {
-	list-style-type: circle;
-	margin: 10;
-	padding: 10;
+ul.tableLinks {
+	padding: 0;	
 }
 
 .home li {	
-	display: block;
+	padding: 10;
+	display: list-item;
+	list-style-type: circle;
 }
